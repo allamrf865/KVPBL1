@@ -72,13 +72,16 @@ sweating = st.checkbox("Berkeringat")
 
 # Input parameter klinis lainnya
 st.subheader("Input Clinical Data:")
-# Ubah semua nilai ke float untuk st.number_input
 blood_pressure = st.number_input("Blood Pressure (mmHg)", min_value=50.0, max_value=200.0, value=110.0)
 heart_rate = st.number_input("Heart Rate (bpm)", min_value=40.0, max_value=200.0, value=85.0)
 body_temp = st.number_input("Body Temperature (°C)", min_value=35.0, max_value=42.0, value=37.0)
 lactate_level = st.number_input("Lactate Level (mmol/L)", min_value=0.0, max_value=10.0, value=2.0)
 lpr = st.number_input("Lactate to Pyruvate Ratio (LPR)", min_value=5.0, max_value=25.0, value=12.0)
 agma = st.number_input("Anion Gap Metabolic Acidosis (AGMA)", min_value=0.0, max_value=30.0, value=16.0)
+
+# Tambahkan selectbox untuk Tilt Table Test (Positive/Negative)
+ttt_val = st.radio("Tilt Table Test (Positive/Negative)", options=["Positive", "Negative"], index=0)
+
 orthostatic_hypotension = st.number_input("Orthostatic Hypotension (mmHg)", min_value=0.0, max_value=50.0, value=20.0)
 map_bp = st.number_input("Mean Arterial Pressure (MAP) (mmHg)", min_value=50.0, max_value=120.0, value=80.0)
 svr = st.number_input("Systemic Vascular Resistance (SVR)", min_value=600.0, max_value=1600.0, value=1000.0)
@@ -98,7 +101,7 @@ if st.button("Analyze"):
             ttt_val_numeric = 1  # Positive Tilt Table Test for fainting
 
         # Prepare input features and ensure they match training data
-        input_features = np.array([[blood_pressure, heart_rate, cardiac_output, lactate_level, lpr, agma, 
+        input_features = np.array([[blood_pressure, heart_rate, 5.0, lactate_level, lpr, agma, 
                                     body_temp, ttt_val_numeric, orthostatic_hypotension, map_bp, svr]])
 
         # Log the shape of input data
@@ -143,7 +146,7 @@ if st.button("Analyze"):
             st.write(f"Heart Rate: {heart_rate:.2f} bpm")
             st.write(f"Lactate to Pyruvate Ratio (LPR): {lpr:.2f}")
             st.write(f"Anion Gap Metabolic Acidosis (AGMA): {agma:.2f}")
-            st.write(f"Cardiac Output (CO): {cardiac_output:.2f} L/min")
+            st.write(f"Cardiac Output (CO): 5.0 L/min")
             st.write(f"Mean Arterial Pressure (MAP): {map_bp:.2f} mmHg")
             st.write(f"Systemic Vascular Resistance (SVR): {svr:.2f} dynes·sec·cm⁻⁵")
             st.write(f"Body Temperature: {body_temp:.2f} °C")
