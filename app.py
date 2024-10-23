@@ -73,51 +73,54 @@ if input_text:
         map_bp = 80.0
         svr = 1200
 
-        # Prepare input features
+        # Prepare input features and ensure they match training data
         input_features = np.array([[blood_pressure, heart_rate, cardiac_output, lactate_level, lpr, agma, 
                                     body_temp, 1 if "faint" in input_text else 0, 20, map_bp, svr]])
 
-        # Predict diagnosis
-        prediction = model.predict(input_features)[0]
-        confidence = model.predict_proba(input_features).max()
+        # Check if the number of features matches before making predictions
+        if input_features.shape[1] == X_train.shape[1]:
+            prediction = model.predict(input_features)[0]
+            confidence = model.predict_proba(input_features).max()
 
-        # Map prediction back to diagnosis
-        diagnosis_map_reverse = {
-            0: "Vasovagal Syncope",
-            1: "Cardiogenic Syncope",
-            2: "Orthostatic Syncope",
-            3: "Heat Exhaustion",
-            4: "Heat Stroke"
-        }
+            # Map prediction back to diagnosis
+            diagnosis_map_reverse = {
+                0: "Vasovagal Syncope",
+                1: "Cardiogenic Syncope",
+                2: "Orthostatic Syncope",
+                3: "Heat Exhaustion",
+                4: "Heat Stroke"
+            }
 
-        # Threshold for confidence, below which no diagnosis is given
-        confidence_threshold = 0.7
+            # Threshold for confidence, below which no diagnosis is given
+            confidence_threshold = 0.7
 
-        if confidence >= confidence_threshold:
-            diagnosis_result = diagnosis_map_reverse[prediction]
-            # Display diagnosis
-            st.subheader("Predicted Diagnosis")
-            st.write(f"Diagnosis: **{diagnosis_result}**")
-            st.write(f"Model Confidence: **{confidence * 100:.2f}%**")
+            if confidence >= confidence_threshold:
+                diagnosis_result = diagnosis_map_reverse[prediction]
+                # Display diagnosis
+                st.subheader("Predicted Diagnosis")
+                st.write(f"Diagnosis: **{diagnosis_result}**")
+                st.write(f"Model Confidence: **{confidence * 100:.2f}%**")
+            else:
+                # If confidence is too low, provide feedback
+                st.subheader("Predicted Diagnosis")
+                st.write(f"Diagnosis: **Could not determine a specific condition**")
+                st.write(f"Model Confidence: **{confidence * 100:.2f}% (too low for a conclusive diagnosis)**")
+
+            # Display model performance
+            st.subheader("Model Performance")
+            st.write(f"Model Accuracy on Test Set: **{accuracy * 100:.2f}%**")
+
+            # Display calculated clinical parameters
+            st.subheader("Calculated Clinical Parameters")
+            st.write(f"Blood Pressure: {blood_pressure:.2f} mmHg")
+            st.write(f"Heart Rate: {heart_rate:.2f} bpm")
+            st.write(f"Lactate to Pyruvate Ratio (LPR): {lpr:.2f}")
+            st.write(f"Anion Gap Metabolic Acidosis (AGMA): {agma:.2f}")
+            st.write(f"Cardiac Output (CO): {cardiac_output:.2f} L/min")
+            st.write(f"Mean Arterial Pressure (MAP): {map_bp:.2f} mmHg")
+            st.write(f"Systemic Vascular Resistance (SVR): {svr:.2f} dynes·sec·cm⁻⁵")
+            st.write(f"Body Temperature: {body_temp:.2f} °C")
         else:
-            # If confidence is too low, provide feedback
-            st.subheader("Predicted Diagnosis")
-            st.write(f"Diagnosis: **Could not determine a specific condition**")
-            st.write(f"Model Confidence: **{confidence * 100:.2f}% (too low for a conclusive diagnosis)**")
-
-        # Display model performance
-        st.subheader("Model Performance")
-        st.write(f"Model Accuracy on Test Set: **{accuracy * 100:.2f}%**")
-
-        # Display calculated clinical parameters
-        st.subheader("Calculated Clinical Parameters")
-        st.write(f"Blood Pressure: {blood_pressure:.2f} mmHg")
-        st.write(f"Heart Rate: {heart_rate:.2f} bpm")
-        st.write(f"Lactate to Pyruvate Ratio (LPR): {lpr:.2f}")
-        st.write(f"Anion Gap Metabolic Acidosis (AGMA): {agma:.2f}")
-        st.write(f"Cardiac Output (CO): {cardiac_output:.2f} L/min")
-        st.write(f"Mean Arterial Pressure (MAP): {map_bp:.2f} mmHg")
-        st.write(f"Systemic Vascular Resistance (SVR): {svr:.2f} dynes·sec·cm⁻⁵")
-        st.write(f"Body Temperature: {body_temp:.2f} °C")
+            st.error("Mismatch in the number of features between training data and input. Please check your input.")
     else:
         st.error("Model could not be initialized due to missing dataset.")
