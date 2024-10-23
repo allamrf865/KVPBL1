@@ -4,7 +4,6 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-from transformers import pipeline
 
 # Load dataset
 @st.cache
@@ -61,97 +60,94 @@ if features is not None and target is not None:
     y_pred = model.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
 
-# Load Hugging Face DistilBERT model for extracting symptoms from text
-classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
-
 # Streamlit app interface
 st.title("AI Diagnosis for Syncope and Heat-Related Conditions")
 
-# Input from user: a paragraph describing the case
-input_text = st.text_area("Enter the patient's case description:", "Masukkan kasus pasien di kolom ini - AI by Allam R.")
+# Pilihan gejala dengan checkbox
+st.subheader("Select Symptoms:")
+dizziness = st.checkbox("Pusing")
+nausea = st.checkbox("Mual")
+fainting = st.checkbox("Pingsan")
+sweating = st.checkbox("Berkeringat")
 
-# Define labels for possible conditions
-possible_conditions = ["pusing", "mual", "panas", "pingsan", "kelelahan", "sinkop vasovagal", "sinkop kardiogenik", "heat exhaustion", "heat stroke"]
+# Input parameter klinis lainnya
+st.subheader("Input Clinical Data:")
+blood_pressure = st.number_input("Blood Pressure (mmHg)", min_value=50, max_value=200, value=110)
+heart_rate = st.number_input("Heart Rate (bpm)", min_value=40, max_value=200, value=85)
+body_temp = st.number_input("Body Temperature (°C)", min_value=35.0, max_value=42.0, value=37.0)
+lactate_level = st.number_input("Lactate Level (mmol/L)", min_value=0.0, max_value=10.0, value=2.0)
+lpr = st.number_input("Lactate to Pyruvate Ratio (LPR)", min_value=5.0, max_value=25.0, value=12.0)
+agma = st.number_input("Anion Gap Metabolic Acidosis (AGMA)", min_value=0.0, max_value=30.0, value=16.0)
+ttt_val = st.radio("Tilt Table Test (Positive/Negative)", options=["Positive", "Negative"], index=0)
+orthostatic_hypotension = st.number_input("Orthostatic Hypotension (mmHg)", min_value=0, max_value=50, value=20)
+map_bp = st.number_input("Mean Arterial Pressure (MAP) (mmHg)", min_value=50, max_value=120, value=80.0)
+svr = st.number_input("Systemic Vascular Resistance (SVR)", min_value=600, max_value=1600, value=1000)
+
+# Konversi nilai Tilt Table Test menjadi numerik
+ttt_val_numeric = 1 if ttt_val == "Positive" else 0
 
 # Tombol untuk memproses prediksi hanya setelah ditekan
 if st.button("Analyze"):
-    if input_text:
-        if features is not None:
-            # Use DistilBERT model to classify symptoms based on input text
-            classification = classifier(input_text, possible_conditions)
-            st.write(f"Classification results: {classification}")
+    if features is not None:
+        # Simulate clinical feature adjustment based on symptoms
+        if dizziness:
+            blood_pressure = 90  # Lower BP due to dizziness
+        if nausea:
+            heart_rate = 100  # Increased HR due to nausea
+        if fainting:
+            ttt_val_numeric = 1  # Positive Tilt Table Test for fainting
 
-            # Analyze the extracted symptoms and adjust the input features
-            symptoms = [label for label, score in zip(classification['labels'], classification['scores']) if score > 0.5]
-            
-            if "pusing" in symptoms or "mual" in symptoms:
-                blood_pressure = 90  # Assume low blood pressure for dizziness
-                heart_rate = 100      # Assume high heart rate due to stress
+        # Prepare input features and ensure they match training data
+        input_features = np.array([[blood_pressure, heart_rate, cardiac_output, lactate_level, lpr, agma, 
+                                    body_temp, ttt_val_numeric, orthostatic_hypotension, map_bp, svr]])
+
+        # Log the shape of input data
+        st.write("Shape of input_features:", input_features.shape)  # Log jumlah fitur saat prediksi
+
+        # Check if the number of features matches before making predictions
+        if input_features.shape[1] == X_train.shape[1]:
+            prediction = model.predict(input_features)[0]
+            confidence = model.predict_proba(input_features).max()
+
+            # Map prediction back to diagnosis
+            diagnosis_map_reverse = {
+                0: "Vasovagal Syncope",
+                1: "Cardiogenic Syncope",
+                2: "Orthostatic Syncope",
+                3: "Heat Exhaustion",
+                4: "Heat Stroke"
+            }
+
+            # Threshold for confidence, below which no diagnosis is given
+            confidence_threshold = 0.7
+
+            if confidence >= confidence_threshold:
+                diagnosis_result = diagnosis_map_reverse[prediction]
+                # Display diagnosis
+                st.subheader("Predicted Diagnosis")
+                st.write(f"Diagnosis: **{diagnosis_result}**")
+                st.write(f"Model Confidence: **{confidence * 100:.2f}%**")
             else:
-                blood_pressure = 110  # Normal BP if no symptoms match
-                heart_rate = 85       # Normal heart rate
+                # If confidence is too low, provide feedback
+                st.subheader("Predicted Diagnosis")
+                st.write(f"Diagnosis: **Could not determine a specific condition**")
+                st.write(f"Model Confidence: **{confidence * 100:.2f}% (too low for a conclusive diagnosis)**")
 
-            cardiac_output = 5.0   # Estimated cardiac output
-            lactate_level = 2.0    # Normal lactate level
-            lpr = 12.0             # Normal Lactate to Pyruvate Ratio (LPR)
-            agma = 16.0            # Normal Anion Gap Metabolic Acidosis
-            body_temp = 37.0       # Normal body temperature
-            ttt_val = 1            # Tilt Table Test simulation, positive due to syncope
-            orthostatic_hypotension = 20  # Mild orthostatic hypotension
-            map_bp = 80.0          # Normal Mean Arterial Pressure
-            svr = 1000             # Estimated Systemic Vascular Resistance
+            # Display model performance
+            st.subheader("Model Performance")
+            st.write(f"Model Accuracy on Test Set: **{accuracy * 100:.2f}%**")
 
-            # Prepare input features and ensure they match training data
-            input_features = np.array([[blood_pressure, heart_rate, cardiac_output, lactate_level, lpr, agma, 
-                                        body_temp, ttt_val, orthostatic_hypotension, map_bp, svr]])
-
-            # Log the shape of input data
-            st.write("Shape of input_features:", input_features.shape)  # Log jumlah fitur saat prediksi
-
-            # Check if the number of features matches before making predictions
-            if input_features.shape[1] == X_train.shape[1]:
-                prediction = model.predict(input_features)[0]
-                confidence = model.predict_proba(input_features).max()
-
-                # Map prediction back to diagnosis
-                diagnosis_map_reverse = {
-                    0: "Vasovagal Syncope",
-                    1: "Cardiogenic Syncope",
-                    2: "Orthostatic Syncope",
-                    3: "Heat Exhaustion",
-                    4: "Heat Stroke"
-                }
-
-                # Threshold for confidence, below which no diagnosis is given
-                confidence_threshold = 0.7
-
-                if confidence >= confidence_threshold:
-                    diagnosis_result = diagnosis_map_reverse[prediction]
-                    # Display diagnosis
-                    st.subheader("Predicted Diagnosis")
-                    st.write(f"Diagnosis: **{diagnosis_result}**")
-                    st.write(f"Model Confidence: **{confidence * 100:.2f}%**")
-                else:
-                    # If confidence is too low, provide feedback
-                    st.subheader("Predicted Diagnosis")
-                    st.write(f"Diagnosis: **Could not determine a specific condition**")
-                    st.write(f"Model Confidence: **{confidence * 100:.2f}% (too low for a conclusive diagnosis)**")
-
-                # Display model performance
-                st.subheader("Model Performance")
-                st.write(f"Model Accuracy on Test Set: **{accuracy * 100:.2f}%**")
-
-                # Display calculated clinical parameters
-                st.subheader("Calculated Clinical Parameters")
-                st.write(f"Blood Pressure: {blood_pressure:.2f} mmHg")
-                st.write(f"Heart Rate: {heart_rate:.2f} bpm")
-                st.write(f"Lactate to Pyruvate Ratio (LPR): {lpr:.2f}")
-                st.write(f"Anion Gap Metabolic Acidosis (AGMA): {agma:.2f}")
-                st.write(f"Cardiac Output (CO): {cardiac_output:.2f} L/min")
-                st.write(f"Mean Arterial Pressure (MAP): {map_bp:.2f} mmHg")
-                st.write(f"Systemic Vascular Resistance (SVR): {svr:.2f} dynes·sec·cm⁻⁵")
-                st.write(f"Body Temperature: {body_temp:.2f} °C")
-            else:
-                st.error("Mismatch in the number of features between training data and input. Please check your input.")
+            # Display calculated clinical parameters
+            st.subheader("Calculated Clinical Parameters")
+            st.write(f"Blood Pressure: {blood_pressure:.2f} mmHg")
+            st.write(f"Heart Rate: {heart_rate:.2f} bpm")
+            st.write(f"Lactate to Pyruvate Ratio (LPR): {lpr:.2f}")
+            st.write(f"Anion Gap Metabolic Acidosis (AGMA): {agma:.2f}")
+            st.write(f"Cardiac Output (CO): {cardiac_output:.2f} L/min")
+            st.write(f"Mean Arterial Pressure (MAP): {map_bp:.2f} mmHg")
+            st.write(f"Systemic Vascular Resistance (SVR): {svr:.2f} dynes·sec·cm⁻⁵")
+            st.write(f"Body Temperature: {body_temp:.2f} °C")
         else:
-            st.error("Model could not be initialized due to missing dataset.")
+            st.error("Mismatch in the number of features between training data and input. Please check your input.")
+    else:
+        st.error("Model could not be initialized due to missing dataset.")
