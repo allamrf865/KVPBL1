@@ -4,18 +4,6 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-import subprocess
-import spacy
-
-# Ensure spaCy is installed properly
-try:
-    import spacy
-    nlp = spacy.load("en_core_web_sm")
-except ImportError:
-    subprocess.run(["pip", "install", "spacy"])
-    subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
-    import spacy
-    nlp = spacy.load("en_core_web_sm")
 
 # Load dataset
 @st.cache
@@ -33,7 +21,7 @@ def preprocess_data(data):
         return None, None
     # Convert categorical data (like Tilt Table Test) to numerical
     data['Tilt Table Test (Positive/Negative)'] = data['Tilt Table Test (Positive/Negative)'].map({"Positive": 1, "Negative": 0})
-    
+
     # Map diagnosis to numerical values for classification
     diagnosis_map = {
         "Vasovagal Syncope": 0,
@@ -43,10 +31,10 @@ def preprocess_data(data):
         "Heat Stroke": 4
     }
     data['Diagnosis'] = data['Diagnosis (Jenis Sinkop atau Heat Stroke/Exhaustion)'].map(diagnosis_map)
-    
+
     features = data.drop(columns=['ID Pasien', 'Gejala (Kalimat Paragraf)', 'Diagnosis (Jenis Sinkop atau Heat Stroke/Exhaustion)'])
     target = data['Diagnosis']
-    
+
     return features, target
 
 # Load and preprocess dataset
@@ -66,40 +54,6 @@ if features is not None and target is not None:
     y_pred = model.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
 
-# Function to extract symptoms from user input using NLP
-def extract_symptoms(text):
-    doc = nlp(text)
-    # Extract relevant clinical terms (for demonstration)
-    symptoms = [ent.text for ent in doc.ents if ent.label_ in ["SYMPTOM", "DISEASE"]]
-    return symptoms
-
-# Function to estimate clinical parameters based on input
-def estimate_clinical_parameters(symptoms):
-    # Default values if no relevant data is found in input
-    blood_pressure = np.random.uniform(90, 120)  # Normal range: 90-120 mmHg
-    heart_rate = np.random.uniform(60, 100)  # Normal range: 60-100 bpm
-    cardiac_output = np.random.uniform(4, 6)  # L/min
-    lactate_level = np.random.uniform(1.5, 2.5)  # mmol/L
-    pyruvate_level = np.random.uniform(0.1, 0.5)  # mmol/L
-    body_temp = np.random.uniform(36.5, 40)  # Celsius
-
-    # Adjust values based on symptoms if relevant
-    if "dizzy" in symptoms or "faint" in symptoms:
-        blood_pressure = 90
-        heart_rate = 100
-    if "hot" in symptoms:
-        body_temp = 39.5
-    if "exhaustion" in symptoms:
-        lactate_level = 3.0
-
-    # Calculate clinical parameters
-    lpr = lactate_level / pyruvate_level  # Lactate to Pyruvate Ratio
-    agma = (140 + 4) - (100 + 24)  # Example Anion Gap Metabolic Acidosis
-    map_bp = (blood_pressure + 2 * (blood_pressure - 40)) / 3  # Example MAP
-    svr = (map_bp - 5) / cardiac_output * 80  # SVR calculation based on MAP and CO
-
-    return blood_pressure, heart_rate, cardiac_output, lactate_level, lpr, agma, body_temp, map_bp, svr
-
 # Streamlit app interface
 st.title("AI Diagnosis for Syncope and Heat-Related Conditions")
 
@@ -107,16 +61,21 @@ st.title("AI Diagnosis for Syncope and Heat-Related Conditions")
 input_text = st.text_area("Enter the patient's case description:", "Patient feels dizzy after standing in a hot environment for a long time.")
 
 if input_text:
-    # Extract symptoms from the input text
-    symptoms = extract_symptoms(input_text)
-
-    # Estimate clinical parameters based on symptoms
-    blood_pressure, heart_rate, cardiac_output, lactate_level, lpr, agma, body_temp, map_bp, svr = estimate_clinical_parameters(symptoms)
-
     if features is not None:
+        # Example: Using static input features for demonstration
+        blood_pressure = 90  # Static for demonstration
+        heart_rate = 100
+        cardiac_output = 5.0
+        lactate_level = 2.5
+        lpr = 12.0
+        agma = 16.0
+        body_temp = 39.5
+        map_bp = 80.0
+        svr = 1200
+
         # Prepare input features
         input_features = np.array([[blood_pressure, heart_rate, cardiac_output, lactate_level, lpr, agma, 
-                                    body_temp, 1 if "faint" in symptoms else 0, 20, map_bp, svr]])
+                                    body_temp, 1 if "faint" in input_text else 0, 20, map_bp, svr]])
 
         # Predict diagnosis
         prediction = model.predict(input_features)[0]
