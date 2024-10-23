@@ -4,6 +4,10 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+import spacy
+
+# Load spaCy model
+nlp = spacy.load("en_core_web_sm")
 
 # Load dataset
 @st.cache
@@ -43,6 +47,15 @@ def preprocess_data(data):
 
     return features, target
 
+# Function to extract symptoms from input text using spaCy
+def extract_symptoms(text):
+    doc = nlp(text)
+    symptoms = []
+    for ent in doc.ents:
+        if ent.label_ == "SYMPTOM" or ent.label_ == "DISEASE":
+            symptoms.append(ent.text.lower())
+    return symptoms
+
 # Load and preprocess dataset
 data = load_data()
 features, target = preprocess_data(data)
@@ -70,9 +83,17 @@ input_text = st.text_area("Enter the patient's case description:", "Masukkan kas
 if st.button("Analyze"):
     if input_text:
         if features is not None:
-            # Adjusted input features to reflect Mira's case
-            blood_pressure = 110  # Mira's blood pressure is 110/70 mmHg
-            heart_rate = 85       # Mira's heart rate is 85 bpm
+            # Extract symptoms using spaCy
+            symptoms = extract_symptoms(input_text)
+            
+            # Analyze the extracted symptoms and adjust the input features
+            if "pusing" in symptoms or "mual" in symptoms:
+                blood_pressure = 90  # Assume low blood pressure for dizziness
+                heart_rate = 100      # Assume high heart rate due to stress
+            else:
+                blood_pressure = 110  # Normal BP if no symptoms match
+                heart_rate = 85       # Normal heart rate
+            
             cardiac_output = 5.0   # Estimated cardiac output
             lactate_level = 2.0    # Normal lactate level
             lpr = 12.0             # Normal Lactate to Pyruvate Ratio (LPR)
@@ -132,7 +153,7 @@ if st.button("Analyze"):
                 st.write(f"Cardiac Output (CO): {cardiac_output:.2f} L/min")
                 st.write(f"Mean Arterial Pressure (MAP): {map_bp:.2f} mmHg")
                 st.write(f"Systemic Vascular Resistance (SVR): {svr:.2f} dynes·sec·cm⁻⁵")
-                st.write(f"Body Temperature: {body_temp:.2f} °C")
+                 st.write(f"Body Temperature: {body_temp:.2f} °C")
             else:
                 st.error("Mismatch in the number of features between training data and input. Please check your input.")
         else:
