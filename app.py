@@ -72,16 +72,16 @@ sweating = st.checkbox("Berkeringat")
 
 # Input parameter klinis lainnya
 st.subheader("Input Clinical Data:")
-blood_pressure = st.number_input("Blood Pressure (mmHg)", min_value=50, max_value=200, value=110)
-heart_rate = st.number_input("Heart Rate (bpm)", min_value=40, max_value=200, value=85)
+# Ubah semua nilai ke float untuk st.number_input
+blood_pressure = st.number_input("Blood Pressure (mmHg)", min_value=50.0, max_value=200.0, value=110.0)
+heart_rate = st.number_input("Heart Rate (bpm)", min_value=40.0, max_value=200.0, value=85.0)
 body_temp = st.number_input("Body Temperature (°C)", min_value=35.0, max_value=42.0, value=37.0)
 lactate_level = st.number_input("Lactate Level (mmol/L)", min_value=0.0, max_value=10.0, value=2.0)
 lpr = st.number_input("Lactate to Pyruvate Ratio (LPR)", min_value=5.0, max_value=25.0, value=12.0)
 agma = st.number_input("Anion Gap Metabolic Acidosis (AGMA)", min_value=0.0, max_value=30.0, value=16.0)
-ttt_val = st.radio("Tilt Table Test (Positive/Negative)", options=["Positive", "Negative"], index=0)
-orthostatic_hypotension = st.number_input("Orthostatic Hypotension (mmHg)", min_value=0, max_value=50, value=20)
-map_bp = st.number_input("Mean Arterial Pressure (MAP) (mmHg)", min_value=50, max_value=120, value=80.0)
-svr = st.number_input("Systemic Vascular Resistance (SVR)", min_value=600, max_value=1600, value=1000)
+orthostatic_hypotension = st.number_input("Orthostatic Hypotension (mmHg)", min_value=0.0, max_value=50.0, value=20.0)
+map_bp = st.number_input("Mean Arterial Pressure (MAP) (mmHg)", min_value=50.0, max_value=120.0, value=80.0)
+svr = st.number_input("Systemic Vascular Resistance (SVR)", min_value=600.0, max_value=1600.0, value=1000.0)
 
 # Konversi nilai Tilt Table Test menjadi numerik
 ttt_val_numeric = 1 if ttt_val == "Positive" else 0
