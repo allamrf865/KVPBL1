@@ -6,6 +6,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import spacy
 
+# Check if spaCy model is installed, if not, download it
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    # Download the model
+    import subprocess
+    subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
+    nlp = spacy.load("en_core_web_sm")
+
 # Load pre-trained NLP model
 nlp = spacy.load("en_core_web_sm")
 
