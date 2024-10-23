@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
@@ -34,8 +35,6 @@ def preprocess_data(data):
 
     # Select relevant features for prediction
     features = data[['Blood Pressure (mmHg)', 'Heart Rate (bpm)', 'Cardiac Output (L/min)', 
-                     'Lactate Level (mmol/L)', 'Lactate to Pyruvate Ratio (LPR)', 
-                     'Anion Gap Metabolic Acidosis (AGMA)', 'Body Temperature (°C)', 
                      'Tilt Table Test (Positive/Negative)', 'Orthostatic Hypotension (mmHg)', 
                      'Mean Arterial Pressure (MAP) (mmHg)', 'Systemic Vascular Resistance (SVR)']]
 
@@ -68,23 +67,14 @@ st.subheader("Select Symptoms:")
 dizziness = st.checkbox("Pusing")
 nausea = st.checkbox("Mual")
 fainting = st.checkbox("Pingsan")
-sweating = st.checkbox("Berkeringat")
 
 # Input parameter klinis lainnya
 st.subheader("Input Clinical Data:")
 blood_pressure = st.number_input("Blood Pressure (mmHg)", min_value=50.0, max_value=200.0, value=110.0)
 heart_rate = st.number_input("Heart Rate (bpm)", min_value=40.0, max_value=200.0, value=85.0)
-body_temp = st.number_input("Body Temperature (°C)", min_value=35.0, max_value=42.0, value=37.0)
-lactate_level = st.number_input("Lactate Level (mmol/L)", min_value=0.0, max_value=10.0, value=2.0)
-lpr = st.number_input("Lactate to Pyruvate Ratio (LPR)", min_value=5.0, max_value=25.0, value=12.0)
-agma = st.number_input("Anion Gap Metabolic Acidosis (AGMA)", min_value=0.0, max_value=30.0, value=16.0)
-
-# Tambahkan selectbox untuk Tilt Table Test (Positive/Negative)
 ttt_val = st.radio("Tilt Table Test (Positive/Negative)", options=["Positive", "Negative"], index=0)
-
 orthostatic_hypotension = st.number_input("Orthostatic Hypotension (mmHg)", min_value=0.0, max_value=50.0, value=20.0)
 map_bp = st.number_input("Mean Arterial Pressure (MAP) (mmHg)", min_value=50.0, max_value=120.0, value=80.0)
-svr = st.number_input("Systemic Vascular Resistance (SVR)", min_value=600.0, max_value=1600.0, value=1000.0)
 
 # Konversi nilai Tilt Table Test menjadi numerik
 ttt_val_numeric = 1 if ttt_val == "Positive" else 0
@@ -100,9 +90,14 @@ if st.button("Analyze"):
         if fainting:
             ttt_val_numeric = 1  # Positive Tilt Table Test for fainting
 
+        # Simulate additional clinical parameters (hidden from user input)
+        lactate_level = 2.0  # Normal lactate level
+        lpr = 12.0           # Normal Lactate to Pyruvate Ratio (LPR)
+        agma = 16.0          # Normal Anion Gap Metabolic Acidosis
+        svr = 1000           # Estimated Systemic Vascular Resistance
+
         # Prepare input features and ensure they match training data
-        input_features = np.array([[blood_pressure, heart_rate, 5.0, lactate_level, lpr, agma, 
-                                    body_temp, ttt_val_numeric, orthostatic_hypotension, map_bp, svr]])
+        input_features = np.array([[blood_pressure, heart_rate, 5.0, ttt_val_numeric, orthostatic_hypotension, map_bp, svr]])
 
         # Log the shape of input data
         st.write("Shape of input_features:", input_features.shape)  # Log jumlah fitur saat prediksi
@@ -140,16 +135,25 @@ if st.button("Analyze"):
             st.subheader("Model Performance")
             st.write(f"Model Accuracy on Test Set: **{accuracy * 100:.2f}%**")
 
-            # Display calculated clinical parameters
+            # Display calculated clinical parameters with a graph
             st.subheader("Calculated Clinical Parameters")
             st.write(f"Blood Pressure: {blood_pressure:.2f} mmHg")
             st.write(f"Heart Rate: {heart_rate:.2f} bpm")
-            st.write(f"Lactate to Pyruvate Ratio (LPR): {lpr:.2f}")
-            st.write(f"Anion Gap Metabolic Acidosis (AGMA): {agma:.2f}")
-            st.write(f"Cardiac Output (CO): 5.0 L/min")
             st.write(f"Mean Arterial Pressure (MAP): {map_bp:.2f} mmHg")
-            st.write(f"Systemic Vascular Resistance (SVR): {svr:.2f} dynes·sec·cm⁻⁵")
-            st.write(f"Body Temperature: {body_temp:.2f} °C")
+            st.write(f"Orthostatic Hypotension: {orthostatic_hypotension:.2f} mmHg")
+
+            # Visualize clinical parameters
+            st.subheader("Visualized Clinical Parameters")
+            fig, ax = plt.subplots()
+            parameters = ['Blood Pressure', 'Heart Rate', 'MAP', 'Orthostatic Hypotension']
+            values = [blood_pressure, heart_rate, map_bp, orthostatic_hypotension]
+            ax.bar(parameters, values)
+            plt.xlabel('Parameters')
+            plt.xlabel('Parameters')
+            plt.ylabel('Values')
+            plt.title('Clinical Parameters Visualization')
+            st.pyplot(fig)
+
         else:
             st.error("Mismatch in the number of features between training data and input. Please check your input.")
     else:
