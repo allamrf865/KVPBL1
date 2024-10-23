@@ -7,18 +7,15 @@ from sklearn.metrics import accuracy_score
 import subprocess
 import spacy
 
-# Ensure spaCy model is downloaded
-def load_spacy_model():
-    try:
-        nlp = spacy.load("en_core_web_sm")
-    except OSError:
-        # Download the model
-        st.info("Downloading spaCy model 'en_core_web_sm'...")
-        subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
-        nlp = spacy.load("en_core_web_sm")
-    return nlp
-
-nlp = load_spacy_model()
+# Ensure spaCy is installed properly
+try:
+    import spacy
+    nlp = spacy.load("en_core_web_sm")
+except ImportError:
+    subprocess.run(["pip", "install", "spacy"])
+    subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
+    import spacy
+    nlp = spacy.load("en_core_web_sm")
 
 # Load dataset
 @st.cache
