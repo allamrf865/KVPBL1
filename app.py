@@ -54,6 +54,9 @@ if features is not None and target is not None:
     y_pred = model.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
 
+    # Log the shape of training data
+    st.write("Shape of X_train:", X_train.shape)  # Log jumlah fitur saat training
+
 # Streamlit app interface
 st.title("AI Diagnosis for Syncope and Heat-Related Conditions")
 
@@ -76,6 +79,9 @@ if input_text:
         # Prepare input features and ensure they match training data
         input_features = np.array([[blood_pressure, heart_rate, cardiac_output, lactate_level, lpr, agma, 
                                     body_temp, 1 if "faint" in input_text else 0, 20, map_bp, svr]])
+
+        # Log the shape of input data
+        st.write("Shape of input_features:", input_features.shape)  # Log jumlah fitur saat prediksi
 
         # Check if the number of features matches before making predictions
         if input_features.shape[1] == X_train.shape[1]:
