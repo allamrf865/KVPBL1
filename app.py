@@ -67,22 +67,22 @@ if features is not None and target is not None:
 st.title("AI Diagnosis for Syncope and Heat-Related Conditions")
 
 # Input from user: a paragraph describing the case
-input_text = st.text_area("Enter the patient's case description:", "Patient feels dizzy after standing in a hot environment for a long time.")
+input_text = st.text_area("Enter the patient's case description:", "Masukkan kasus pasien di kolom ini - AI by Allam R.")
 
 if input_text:
     if features is not None:
-        # Example: Using static input features for demonstration
-        blood_pressure = 90  # Static for demonstration
-        heart_rate = 100
-        cardiac_output = 5.0
-        lactate_level = 2.5
-        lpr = 12.0
-        agma = 16.0
-        body_temp = 39.5
-        ttt_val = 1 if "faint" in input_text else 0
-        orthostatic_hypotension = 20
-        map_bp = 80.0
-        svr = 1200
+        # Adjusted input features to reflect Mira's case
+        blood_pressure = 110  # Mira's blood pressure is 110/70 mmHg
+        heart_rate = 85       # Mira's heart rate is 85 bpm
+        cardiac_output = 5.0   # Estimated cardiac output
+        lactate_level = 2.0    # Normal lactate level
+        lpr = 12.0             # Normal Lactate to Pyruvate Ratio (LPR)
+        agma = 16.0            # Normal Anion Gap Metabolic Acidosis
+        body_temp = 37.0       # Normal body temperature
+        ttt_val = 1            # Tilt Table Test simulation, positive due to syncope
+        orthostatic_hypotension = 20  # Mild orthostatic hypotension
+        map_bp = 80.0          # Normal Mean Arterial Pressure
+        svr = 1000             # Estimated Systemic Vascular Resistance
 
         # Prepare input features and ensure they match training data
         input_features = np.array([[blood_pressure, heart_rate, cardiac_output, lactate_level, lpr, agma, 
