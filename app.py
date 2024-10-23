@@ -32,7 +32,13 @@ def preprocess_data(data):
     }
     data['Diagnosis'] = data['Diagnosis (Jenis Sinkop atau Heat Stroke/Exhaustion)'].map(diagnosis_map)
 
-    features = data.drop(columns=['ID Pasien', 'Gejala (Kalimat Paragraf)', 'Diagnosis (Jenis Sinkop atau Heat Stroke/Exhaustion)'])
+    # Select relevant features for prediction
+    features = data[['Blood Pressure (mmHg)', 'Heart Rate (bpm)', 'Cardiac Output (L/min)', 
+                     'Lactate Level (mmol/L)', 'Lactate to Pyruvate Ratio (LPR)', 
+                     'Anion Gap Metabolic Acidosis (AGMA)', 'Body Temperature (°C)', 
+                     'Tilt Table Test (Positive/Negative)', 'Orthostatic Hypotension (mmHg)', 
+                     'Mean Arterial Pressure (MAP) (mmHg)', 'Systemic Vascular Resistance (SVR)']]
+
     target = data['Diagnosis']
 
     return features, target
@@ -73,12 +79,14 @@ if input_text:
         lpr = 12.0
         agma = 16.0
         body_temp = 39.5
+        ttt_val = 1 if "faint" in input_text else 0
+        orthostatic_hypotension = 20
         map_bp = 80.0
         svr = 1200
 
         # Prepare input features and ensure they match training data
         input_features = np.array([[blood_pressure, heart_rate, cardiac_output, lactate_level, lpr, agma, 
-                                    body_temp, 1 if "faint" in input_text else 0, 20, map_bp, svr]])
+                                    body_temp, ttt_val, orthostatic_hypotension, map_bp, svr]])
 
         # Log the shape of input data
         st.write("Shape of input_features:", input_features.shape)  # Log jumlah fitur saat prediksi
